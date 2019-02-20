@@ -1,0 +1,6 @@
+# vs local files
+/CMakeSettings.json
+/.vs
+# cmake local files
+/cmake-build-*
+/dep
