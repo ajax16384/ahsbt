@@ -164,6 +164,11 @@ void ThreadMethod(SThreadData *data,
     abort();
   }
 
+  struct curl_slist *httpHeaderList = nullptr;
+  if (noReuse) {
+      httpHeaderList = curl_slist_append(httpHeaderList, "Connection: close");
+  }
+
   for (;;) {
     std::size_t drainedConnectionsCount = 0;
     for (auto &connection : connections) {
@@ -230,6 +235,14 @@ void ThreadMethod(SThreadData *data,
           code = curl_easy_setopt(connection.easyHandle, CURLOPT_FORBID_REUSE, 1L);
           if (CURLE_OK != code) {
             PrintCURLCode("curl_easy_setopt CURLOPT_FORBID_REUSE", code);
+            abort();
+          }
+        }
+
+        if (nullptr != httpHeaderList) {
+          code = curl_easy_setopt(connection.easyHandle, CURLOPT_HTTPHEADER, httpHeaderList);
+          if (CURLE_OK != code) {
+            PrintCURLCode("curl_easy_setopt CURLOPT_HTTPHEADER", code);
             abort();
           }
         }
@@ -348,6 +361,9 @@ void ThreadMethod(SThreadData *data,
     }
   }
 
+  if (nullptr != httpHeaderList) {
+    curl_slist_free_all(httpHeaderList);
+  }
   curl_multi_cleanup(multiCurlHandle);
 }
 
